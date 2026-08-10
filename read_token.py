@@ -44,9 +44,28 @@ def jobs(host,token):
         else:
             logging.error(f"Failed to fetch jobs: {response.status_code} - {response.text}")
             raise Exception(f"Failed to fetch jobs: {response.status_code} {response.text}")
-        
+
+
+def get_backup_jobs_summary(host,username, password):
+    token = read_token(host, username, password)
+    jobs_list = jobs(host, token)
+    jobs_ok = []
+    jobs_failed = []
+    jobs_unknown = []
+    for job in jobs_list:
+        if job["result"]["status"] == "OK":
+            jobs_ok.append(job)
+        elif job["result"]["status"] == "FAILED":
+            jobs_failed.append(job)
+        else:
+            jobs_unknown.append(job)
+    return {
+            "total_jobs": len(jobs_list),
+            "jobs_ok": len(jobs_ok),
+            "jobs_failed": len(jobs_failed),
+            "jobs_unknown": len(jobs_unknown)   
+        }
+
 if __name__ == "__main__":
-    token = read_token("localhost:5000", "admin", "test")
-    jobs_list = jobs("localhost:5000", token)
-    print(f"Got {len(jobs_list)} jobs.")
-    print(jobs_list[0])  # Print the first job for verification
+    result = get_backup_jobs_summary("localhost:5000", "admin", "test")
+    print(json.dumps(result))
